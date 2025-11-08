@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subcategory }} - {{ category }}{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Home</a> 
+        <span>/</span> 
+        <span>{{ category }}</span> 
+        <span>/</span> 
+        <span class="current">{{ subcategory }}</span>
+    </div>
+    <h2>{{ subcategory }}</h2>
+    <p class="item-count">Total: {{ paginated.total_items }} items</p>
+</div>
+
+<div class="items-grid">
+    {% for item in paginated.data %}
+    <div class="item-card">
+        {% set item_name = item[columns[0]] %}
+        <a href="{{ url_for('item_detail', csv_path=csv_path, item_name=item_name) }}" class="item-link">
+            <div class="item-image">
+                {% if 'image_path' in item and item['image_path'] %}
+                {% set img_path = item['image_path']|replace('\\', '/') %}
+                <img src="/images/{{ img_path }}" 
+                     alt="{{ item_name }}"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'no-image\'>No Image</div>'">
+                {% else %}
+                <div class="no-image">No Image</div>
+                {% endif %}
+            </div>
+            <div class="item-info">
+                <h3>{{ item_name }}</h3>
+                {% if '显示名字' in item and item['显示名字'] %}
+                <p class="display-name">{{ item['显示名字'] }}</p>
+                {% endif %}
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if paginated.total_pages > 1 %}
+<div class="pagination">
+    {% if paginated.has_prev %}
+    <a href="{{ url_for('category_list', csv_path=csv_path, page=paginated.page-1) }}" class="page-btn">
+        &laquo; Previous
+    </a>
+    {% else %}
+    <span class="page-btn disabled">&laquo; Previous</span>
+    {% endif %}
+    
+    <span class="page-info">
+        Page {{ paginated.page }} of {{ paginated.total_pages }}
+    </span>
+    
+    {% if paginated.has_next %}
+    <a href="{{ url_for('category_list', csv_path=csv_path, page=paginated.page+1) }}" class="page-btn">
+        Next &raquo;
+    </a>
+    {% else %}
+    <span class="page-btn disabled">Next &raquo;</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

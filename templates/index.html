@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Knowledge Elements{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <h2>Welcome to Shan Hai Jing Knowledge Elements</h2>
+    <p class="intro-text">
+        Explore the ancient Chinese classic "Classic of Mountains and Seas" (山海经) through our comprehensive knowledge base. 
+        Navigate through categories using the sidebar to discover mythical creatures, legendary places, and ancient wisdom.
+    </p>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <h3>{{ categories|length }}</h3>
+            <p>Categories</p>
+        </div>
+        <div class="stat-card">
+            <h3>
+                {% set total = namespace(count=0) %}
+                {% for category, csv_files in categories.items() %}
+                    {% set total.count = total.count + csv_files|length %}
+                {% endfor %}
+                {{ total.count }}
+            </h3>
+            <p>Subcategories</p>
+        </div>
+    </div>
+    
+    <div class="quick-start">
+        <h3>Quick Start</h3>
+        <p>Select a category from the sidebar to begin exploring.</p>
+        <ul>
+            <li>Click on category names to expand subcategories</li>
+            <li>Select a subcategory to view items</li>
+            <li>Click on any item to see detailed information and images</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

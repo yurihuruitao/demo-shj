@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shan Hai Jing Knowledge Elements{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>Knowledge Elements</h1>
+                <p class="subtitle">山海经知识元</p>
+            </div>
+            
+            <div class="nav-menu">
+                {% for category, csv_files in categories.items() %}
+                <div class="nav-category">
+                    <button class="category-toggle" onclick="toggleCategory('{{ category }}')">
+                        <span class="category-name">{{ category }}</span>
+                        <span class="arrow">▶</span>
+                    </button>
+                    <div class="nav-items" id="category-{{ category }}" style="display: none;">
+                        {% for csv_file in csv_files %}
+                        <a href="{{ url_for('category_list', csv_path=csv_file.path) }}" 
+                           class="nav-item {% if csv_path == csv_file.path %}active{% endif %}">
+                            {{ csv_file.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function toggleCategory(categoryId) {
+            const element = document.getElementById('category-' + categoryId);
+            const button = element.previousElementSibling;
+            const arrow = button.querySelector('.arrow');
+            
+            if (element.style.display === 'none') {
+                element.style.display = 'block';
+                arrow.textContent = '▼';
+                button.classList.add('expanded');
+            } else {
+                element.style.display = 'none';
+                arrow.textContent = '▶';
+                button.classList.remove('expanded');
+            }
+        }
+
+        // Auto-expand current category
+        document.addEventListener('DOMContentLoaded', function() {
+            const activeItem = document.querySelector('.nav-item.active');
+            if (activeItem) {
+                const categoryDiv = activeItem.closest('.nav-items');
+                if (categoryDiv) {
+                    categoryDiv.style.display = 'block';
+                    const button = categoryDiv.previousElementSibling;
+                    button.classList.add('expanded');
+                    button.querySelector('.arrow').textContent = '▼';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

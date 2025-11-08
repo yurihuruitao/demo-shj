@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item[item.keys()|list|first] }} - Detail{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('index') }}">Home</a> 
+        <span>/</span> 
+        <a href="{{ url_for('category_list', csv_path=csv_path) }}">{{ category }}</a>
+        <span>/</span> 
+        <span class="current">{{ item[item.keys()|list|first] }}</span>
+    </div>
+</div>
+
+<div class="detail-container">
+    <div class="detail-header">
+        <h1>{{ item[item.keys()|list|first] }}</h1>
+        {% if '显示名字' in item and item['显示名字'] %}
+        <p class="romanization">{{ item['显示名字'] }}</p>
+        {% endif %}
+    </div>
+
+    <div class="detail-content">
+        <div class="detail-image-section">
+            {% if image_path %}
+            <img src="/images/{{ image_path }}" 
+                 alt="{{ item[item.keys()|list|first] }}"
+                 class="detail-image"
+                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'no-image-large\'>No Image Available</div>'">
+            {% else %}
+            <div class="no-image-large">No Image Available</div>
+            {% endif %}
+        </div>
+
+        <div class="detail-info-section">
+            <!-- Chapter and Original Text Section -->
+            {% if chapter or original_text %}
+            <div class="info-block chapter-section">
+                <h2>Classical Text</h2>
+                {% if chapter %}
+                <div class="chapter-info">
+                    <span class="label-inline">Chapter:</span>
+                    <span class="chapter-name">《{{ chapter }}》</span>
+                </div>
+                {% endif %}
+                {% if original_text %}
+                <div class="original-text">
+                    <p>{{ original_text }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- All Occurrences -->
+            {% if all_occurrences and all_occurrences|length > 1 %}
+            <div class="info-block occurrences-section">
+                <h3>All Occurrences ({{ all_occurrences|length }})</h3>
+                <div class="occurrences-list">
+                    {% for occurrence in all_occurrences %}
+                    <div class="occurrence-item">
+                        <div class="occurrence-chapter">《{{ occurrence.chapter }}》</div>
+                        <div class="occurrence-text">{{ occurrence.original_text }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <h2>Information</h2>
+            
+            {% if 'prompt翻译' in item and item['prompt翻译'] %}
+            <div class="info-block">
+                <h3>Description (English)</h3>
+                <p class="description">{{ item['prompt翻译'] }}</p>
+            </div>
+            {% endif %}
+            
+            {% if 'prompt' in item and item['prompt'] %}
+            <div class="info-block">
+                <h3>Original Prompt (Chinese)</h3>
+                <p class="description-chinese">{{ item['prompt'] }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="info-block">
+                <h3>Details</h3>
+                <table class="detail-table">
+                    {% for key, value in item.items() %}
+                        {% if key not in ['prompt', 'prompt翻译', 'image_path', '显示名字'] and value %}
+                        <tr>
+                            <td class="label">{{ key }}</td>
+                            <td class="value">{{ value }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('category_list', csv_path=csv_path) }}" class="btn btn-secondary">
+                    &laquo; Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Network Graph Section -->
+    {% if network_html %}
+    <div class="network-section">
+        <h2>Knowledge Network</h2>
+        <p class="network-description">Interactive visualization showing relationships between this entity and related elements from the Classic of Mountains and Seas.</p>
+        <div class="network-container">
+            {{ network_html|safe }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
