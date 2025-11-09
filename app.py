@@ -335,6 +335,12 @@ def test_map():
     return send_from_directory('.', 'test_map.html')
 
 
+@app.route('/test_cdn')
+def test_cdn():
+    """Test page for CDN connectivity"""
+    return render_template('test_cdn.html')
+
+
 @app.route('/')
 def index():
     """Home page with global network visualization"""
