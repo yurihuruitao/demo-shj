@@ -3,7 +3,7 @@ Flask web application for Shan Hai Jing Knowledge Elements
 """
 from flask import Flask, render_template, request, abort, send_from_directory
 from data_loader import get_category_structure, load_csv_data, get_paginated_data, get_item_detail
-from network_generator import load_cooccurrence_data, get_item_relationships, create_interactive_network_graph, get_all_occurrences
+from network_generator import load_cooccurrence_data, get_item_relationships, create_interactive_network_graph, get_all_occurrences, create_global_network_graph
 from pathlib import Path
 import os
 
@@ -17,6 +17,97 @@ IMAGES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
 COOCCURRENCE_DF = load_cooccurrence_data()
 
 
+def calculate_top_connected_nodes(df, top_n=10):
+    """
+    Calculate the top N most connected nodes from the cooccurrence data
+    
+    Args:
+        df: DataFrame with cooccurrence data
+        top_n: Number of top nodes to return
+        
+    Returns:
+        List of dictionaries with node info (name, pinyin, connection_count, csv_path)
+    """
+    import pandas as pd
+    import os
+    from pathlib import Path
+    
+    if df is None or df.empty:
+        return []
+    
+    # Track nodes and their connections
+    node_connections = {}
+    
+    # Count connections for each node (excluding '无关' relationships)
+    for _, row in df.iterrows():
+        main_entity = row['名字']
+        main_entity_pinyin = row['名字（拼音）'] if pd.notna(row['名字（拼音）']) else main_entity
+        
+        if main_entity not in node_connections:
+            node_connections[main_entity] = {
+                'name': main_entity,
+                'pinyin': main_entity_pinyin,
+                'count': 0
+            }
+        
+        # Parse related entities
+        related_entities = str(row['相关人物']).split(',') if pd.notna(row['相关人物']) else []
+        related_pinyin = str(row['相关人物（拼音）']).split(',') if pd.notna(row['相关人物（拼音）']) else []
+        relationships = str(row['关系']).split(',') if pd.notna(row['关系']) else []
+        
+        for entity, entity_pinyin, relation in zip(related_entities, related_pinyin, relationships):
+            entity = entity.strip()
+            if entity and relation.strip() != '无关':
+                if entity not in node_connections:
+                    node_connections[entity] = {
+                        'name': entity,
+                        'pinyin': entity_pinyin.strip(),
+                        'count': 0
+                    }
+                node_connections[main_entity]['count'] += 1
+                node_connections[entity]['count'] += 1
+    
+    # Sort by connection count and get top N
+    sorted_nodes = sorted(node_connections.values(), key=lambda x: x['count'], reverse=True)
+    top_nodes = sorted_nodes[:top_n]
+    
+    # Find CSV path for each top node
+    csv_base_dir = Path(__file__).parent / 'csv_by_category_English'
+    for node in top_nodes:
+        node['csv_path'] = find_entity_csv_path(node['name'], csv_base_dir)
+    
+    return top_nodes
+
+
+def find_entity_csv_path(entity_name, csv_base_dir):
+    """
+    Find the CSV file path for a given entity
+    
+    Args:
+        entity_name: Name of the entity to find
+        csv_base_dir: Base directory containing CSV files
+        
+    Returns:
+        Relative CSV path or None if not found
+    """
+    import pandas as pd
+    
+    # Search through all CSV files
+    for csv_file in csv_base_dir.rglob('*.csv'):
+        try:
+            df = pd.read_csv(csv_file, encoding='utf-8')
+            # Check if entity exists in '名字' column
+            if '名字' in df.columns:
+                if entity_name in df['名字'].values:
+                    # Return relative path from csv_by_category_English
+                    rel_path = csv_file.relative_to(csv_base_dir)
+                    return str(rel_path).replace('\\', '/')
+        except Exception:
+            continue
+    
+    return None
+
+
 @app.route('/images/<path:filename>')
 def serve_image(filename):
     """Serve images from the images directory"""
@@ -25,9 +116,35 @@ def serve_image(filename):
 
 @app.route('/')
 def index():
-    """Home page with navigation"""
+    """Home page with global network visualization"""
     categories = get_category_structure()
-    return render_template('index.html', categories=categories)
+    
+    # Get max_nodes from query parameter, default to 100
+    max_nodes = request.args.get('max_nodes', 100, type=int)
+    
+    # Limit to reasonable range (10 to 5000)
+    max_nodes = max(10, min(max_nodes, 5000))
+    
+    # Calculate top 10 most connected nodes
+    top_nodes = []
+    if COOCCURRENCE_DF is not None:
+        top_nodes = calculate_top_connected_nodes(COOCCURRENCE_DF, top_n=10)
+    
+    # Generate global network graph
+    global_network_html = None
+    if COOCCURRENCE_DF is not None:
+        global_network_html = create_global_network_graph(
+            COOCCURRENCE_DF, 
+            width="100%", 
+            height="800px",
+            max_nodes=max_nodes
+        )
+    
+    return render_template('index.html', 
+                         categories=categories,
+                         global_network_html=global_network_html,
+                         current_max_nodes=max_nodes,
+                         top_nodes=top_nodes)
 
 
 @app.route('/category/<path:csv_path>')

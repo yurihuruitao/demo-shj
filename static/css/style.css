@@ -35,10 +35,22 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
+.sidebar-header .logo-link {
+    display: block;
+    text-decoration: none;
+    color: white;
+    transition: opacity 0.2s;
+}
+
+.sidebar-header .logo-link:hover {
+    opacity: 0.8;
+}
+
 .sidebar-header h1 {
     font-size: 1.5em;
     font-weight: 600;
     margin-bottom: 5px;
+    cursor: pointer;
 }
 
 .sidebar-header .subtitle {
@@ -645,5 +657,371 @@ body {
     
     .occurrences-list {
         max-height: 300px;
+    }
+}
+
+/* Global Network Section */
+.global-network-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.global-network-section h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.network-intro {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.8;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Top Nodes Section */
+.top-nodes-section {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 24px rgba(245, 87, 108, 0.3);
+}
+
+.top-nodes-section h3 {
+    color: white;
+    font-size: 1.8rem;
+    text-align: center;
+    margin: 0 0 1.5rem 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.top-nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.8rem;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.top-node-card {
+    background: white;
+    border-radius: 10px;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.top-node-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+}
+
+.top-node-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+}
+
+a.top-node-card {
+    color: inherit;
+}
+
+a.top-node-card:hover .node-name-pinyin {
+    color: #f5576c;
+}
+
+a.top-node-card:hover .connection-count {
+    transform: scale(1.15);
+}
+
+.top-node-card[data-rank="1"] {
+    background: linear-gradient(135deg, #ffd89b 0%, #ffb347 100%);
+    border: 2px solid #FFD700;
+}
+
+.top-node-card[data-rank="1"] .node-rank {
+    background: #FFD700;
+    color: #2c3e50;
+}
+
+.top-node-card[data-rank="2"] {
+    background: linear-gradient(135deg, #e6e6e6 0%, #c0c0c0 100%);
+    border: 2px solid #C0C0C0;
+}
+
+.top-node-card[data-rank="2"] .node-rank {
+    background: #C0C0C0;
+    color: #2c3e50;
+}
+
+.top-node-card[data-rank="3"] {
+    background: linear-gradient(135deg, #f4a582 0%, #cd7f32 100%);
+    border: 2px solid #CD7F32;
+}
+
+.top-node-card[data-rank="3"] .node-rank {
+    background: #CD7F32;
+    color: white;
+}
+
+.node-rank {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.node-info {
+    width: 100%;
+    text-align: center;
+}
+
+.node-name-pinyin {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.2rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.node-name-chinese {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.4rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.node-connections {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+}
+
+.connection-icon {
+    font-size: 1rem;
+}
+
+.connection-count {
+    font-weight: bold;
+    color: #f5576c;
+    font-size: 1.1rem;
+}
+
+.connection-label {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+/* Network Controls */
+.network-controls {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.node-control-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.node-control-form label {
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.node-control-form input[type="number"] {
+    width: 150px;
+    padding: 0.6rem 1rem;
+    border: 2px solid white;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.node-control-form input[type="number"]:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
+}
+
+.btn-update {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn-update:hover {
+    background: #ffd700;
+    color: #2c3e50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-update:active {
+    transform: translateY(0);
+}
+
+.current-info {
+    color: white;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+}
+
+.current-info strong {
+    color: #ffd700;
+    font-size: 1.1rem;
+}
+
+.network-intro strong {
+    color: #3498db;
+    font-weight: 600;
+}
+
+.global-network-wrapper {
+    width: 100%;
+    min-height: 800px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Responsive adjustments for global network */
+@media (max-width: 768px) {
+    .global-network-section {
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .global-network-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .global-network-wrapper {
+        min-height: 600px;
+    }
+    
+    .network-intro {
+        font-size: 0.9rem;
+    }
+    
+    .network-controls {
+        padding: 1rem;
+    }
+    
+    .node-control-form {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .node-control-form label {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    .node-control-form input[type="number"] {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .btn-update {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .current-info {
+        width: 100%;
+        text-align: center;
+        font-size: 0.85rem;
+    }
+    
+    .top-nodes-section {
+        padding: 1.5rem;
+    }
+    
+    .top-nodes-section h3 {
+        font-size: 1.4rem;
+    }
+    
+    .top-nodes-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    
+    .top-node-card {
+        padding: 0.6rem;
+    }
+    
+    .node-rank {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .node-name-pinyin {
+        font-size: 0.8rem;
+    }
+    
+    .node-name-chinese {
+        font-size: 0.75rem;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .top-nodes-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }

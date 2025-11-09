@@ -37,4 +37,74 @@
         </ul>
     </div>
 </div>
+
+<!-- Global Knowledge Network -->
+{% if global_network_html %}
+<div class="global-network-section">
+    <h2>🌐 Global Knowledge Network</h2>
+    <p class="network-intro">
+        Interactive visualization of the complete knowledge network from Shan Hai Jing. 
+        Nodes represent entities, colors indicate connection density, and edges show relationships.
+    </p>
+    
+    <!-- Top 10 Most Connected Nodes -->
+    {% if top_nodes %}
+    <div class="top-nodes-section">
+        <h3>🏆 Top 10 Most Connected Entities</h3>
+        <div class="top-nodes-grid">
+            {% for node in top_nodes %}
+            {% if node.csv_path %}
+            <a href="{{ url_for('item_detail', csv_path=node.csv_path, item_name=node.name) }}" class="top-node-card" data-rank="{{ loop.index }}">
+                <div class="node-rank">{{ loop.index }}</div>
+                <div class="node-info">
+                    <div class="node-name-pinyin">{{ node.pinyin }}</div>
+                    <div class="node-name-chinese">{{ node.name }}</div>
+                    <div class="node-connections">
+                        <span class="connection-icon">🔗</span>
+                        <span class="connection-count">{{ node.count }}</span>
+                        <span class="connection-label">links</span>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div class="top-node-card" data-rank="{{ loop.index }}">
+                <div class="node-rank">{{ loop.index }}</div>
+                <div class="node-info">
+                    <div class="node-name-pinyin">{{ node.pinyin }}</div>
+                    <div class="node-name-chinese">{{ node.name }}</div>
+                    <div class="node-connections">
+                        <span class="connection-icon">🔗</span>
+                        <span class="connection-count">{{ node.count }}</span>
+                        <span class="connection-label">links</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Node Count Control -->
+    <div class="network-controls">
+        <form method="get" action="/" class="node-control-form">
+            <label for="max_nodes">Number of nodes to display:</label>
+            <input type="number" 
+                   id="max_nodes" 
+                   name="max_nodes" 
+                   value="{{ current_max_nodes }}" 
+                   min="10" 
+                   max="5000" 
+                   step="10"
+                   placeholder="100">
+            <button type="submit" class="btn-update">Update Network</button>
+            <span class="current-info">Currently showing: <strong>{{ current_max_nodes }}</strong> nodes</span>
+        </form>
+    </div>
+    
+    <div class="global-network-wrapper">
+        {{ global_network_html|safe }}
+    </div>
+</div>
+{% endif %}
 {% endblock %}
