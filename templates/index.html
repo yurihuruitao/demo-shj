@@ -67,21 +67,51 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
-        // Check if ECharts is loaded
-        if (typeof echarts === 'undefined') {
-            console.error('ECharts library not loaded!');
-            document.getElementById('china-map').innerHTML = 
-                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c;">' +
-                '⚠️ ECharts library failed to load. Please refresh the page.' +
-                '</div>';
-            return;
+        // Load ECharts with multiple fallback CDNs
+        const echartsUrls = [
+            'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
+            'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
+            'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'
+        ];
+        
+        let currentUrlIndex = 0;
+        
+        function loadECharts() {
+            if (currentUrlIndex >= echartsUrls.length) {
+                console.error('Failed to load ECharts from all CDN sources');
+                document.getElementById('china-map').innerHTML = 
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
+                    '⚠️ Unable to load ECharts library from all sources.<br/>Please check your internet connection and refresh the page.' +
+                    '</div>';
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = echartsUrls[currentUrlIndex];
+            script.onload = function() {
+                console.log('✅ ECharts loaded from:', echartsUrls[currentUrlIndex]);
+                console.log('✅ ECharts version:', echarts.version);
+                initializeMap();
+            };
+            script.onerror = function() {
+                console.warn('❌ Failed to load ECharts from:', echartsUrls[currentUrlIndex]);
+                currentUrlIndex++;
+                loadECharts();
+            };
+            document.head.appendChild(script);
         }
         
-        console.log('✅ ECharts loaded, version:', echarts.version);
+        function initializeMap() {
+            if (typeof echarts === 'undefined') {
+                console.error('ECharts is not available');
+                return;
+            }
+            
+            console.log('✅ Initializing map...');
         
         // Map data
         var mapData = {{ map_data|tojson|safe }};
@@ -246,11 +276,15 @@
             // Try next source
             loadMapFromSource(sourceIndex + 1);
         });
-    }
-    
+        }
+        
         // Start loading from first source
         console.log('🔄 Starting to load map...');
         loadMapFromSource(0);
+        }
+        
+        // Start loading ECharts
+        loadECharts();
     });
 </script>
 {% endif %}

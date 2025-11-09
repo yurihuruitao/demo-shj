@@ -140,11 +140,50 @@
 </div>
 
 {% if location_data and location_data.has_location %}
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Province name mapping - add 省/自治区 suffix
-    const provinceNameMap = {
+    // Load ECharts with multiple fallback CDNs
+    const echartsUrls = [
+        'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
+        'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
+        'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js'
+    ];
+    
+    let echartsLoaded = false;
+    let currentUrlIndex = 0;
+    
+    function loadECharts() {
+        if (currentUrlIndex >= echartsUrls.length) {
+            console.error('Failed to load ECharts from all CDN sources');
+            document.getElementById('entityMap').innerHTML = 
+                '<div style="text-align:center;padding:50px;color:#e74c3c;"><strong>⚠️ Unable to load map data from all sources.</strong><br>Please check your internet connection and refresh the page.</div>';
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = echartsUrls[currentUrlIndex];
+        script.onload = function() {
+            console.log('✅ ECharts loaded from:', echartsUrls[currentUrlIndex]);
+            echartsLoaded = true;
+            initMap();
+        };
+        script.onerror = function() {
+            console.warn('❌ Failed to load from:', echartsUrls[currentUrlIndex]);
+            currentUrlIndex++;
+            loadECharts();
+        };
+        document.head.appendChild(script);
+    }
+    
+    function initMap() {
+        if (!window.echarts) {
+            console.error('ECharts is not available');
+            return;
+        }
+        
+        // Province name mapping - add 省/自治区 suffix
+        const provinceNameMap = {
         '浙江': '浙江省',
         '江西': '江西省',
         '湖南': '湖南省',
@@ -250,8 +289,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error loading map:', error);
-            document.getElementById('entityMap').innerHTML = '<div style="text-align:center;padding:50px;color:#666;">地图加载失败</div>';
+            document.getElementById('entityMap').innerHTML = '<div style="text-align:center;padding:50px;color:#e74c3c;">⚠️ 地图数据加载失败,请刷新页面重试</div>';
         });
+    }
+    
+    // Start loading ECharts
+    loadECharts();
 });
 </script>
 {% endif %}
