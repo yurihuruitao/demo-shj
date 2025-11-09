@@ -67,49 +67,20 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='lib/echarts.min.js') }}"></script>
 <script>
     // Wait for DOM to be ready
     document.addEventListener('DOMContentLoaded', function() {
-        // Load ECharts with multiple fallback CDNs (optimized for Asia-Pacific)
-        const echartsUrls = [
-            'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
-            'https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
-            'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
-            'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
-            'https://lib.baomitu.com/echarts/5.4.3/echarts.min.js'
-        ];
-        
-        let currentUrlIndex = 0;
-        
-        function loadECharts() {
-            if (currentUrlIndex >= echartsUrls.length) {
-                console.error('Failed to load ECharts from all CDN sources');
-                document.getElementById('china-map').innerHTML = 
-                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
-                    '⚠️ Unable to load ECharts library from all sources.<br/>Please check your internet connection and refresh the page.' +
-                    '</div>';
-                return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = echartsUrls[currentUrlIndex];
-            script.onload = function() {
-                console.log('✅ ECharts loaded from:', echartsUrls[currentUrlIndex]);
-                console.log('✅ ECharts version:', echarts.version);
-                initializeMap();
-            };
-            script.onerror = function() {
-                console.warn('❌ Failed to load ECharts from:', echartsUrls[currentUrlIndex]);
-                currentUrlIndex++;
-                loadECharts();
-            };
-            document.head.appendChild(script);
-        }
+        console.log('✅ ECharts loaded from local file');
+        console.log('✅ ECharts version:', echarts.version);
         
         function initializeMap() {
             if (typeof echarts === 'undefined') {
                 console.error('ECharts is not available');
+                document.getElementById('china-map').innerHTML = 
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
+                    '⚠️ ECharts library failed to load.' +
+                    '</div>';
                 return;
             }
             
@@ -119,40 +90,18 @@
         var mapData = {{ map_data|tojson|safe }};
         console.log('✅ Map data loaded:', mapData);
         
-        // Load China map JSON data - try multiple sources (optimized for Asia-Pacific)
-        var mapSources = [
-            'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
-            'https://unpkg.com/echarts@5.4.3/map/json/china.json',
-            'https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json',
-            'https://fastly.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json',
-            'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/map/js/china.js'
-        ];
+        // Load China map JSON from local file
+        console.log('🔄 Loading map from local file...');
         
-        function loadMapFromSource(sourceIndex) {
-        if (sourceIndex >= mapSources.length) {
-            document.getElementById('china-map').innerHTML = 
-                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
-                '⚠️ Unable to load map data from all sources.<br/>Please check your internet connection and refresh the page.' +
-                '</div>';
-            return;
-        }
-        
-        console.log('Trying to load map from:', mapSources[sourceIndex]);
-        
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        
-        fetch(mapSources[sourceIndex], { signal: controller.signal })
+        fetch("{{ url_for('static', filename='lib/china.json') }}")
         .then(response => {
-            clearTimeout(timeoutId);
             if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
+                throw new Error('Failed to load local map file');
             }
             return response.json();
         })
         .then(chinaJson => {
-            console.log('✅ Map loaded from:', mapSources[sourceIndex]);
+            console.log('✅ Map loaded from local file');
             // Register map
             echarts.registerMap('china', chinaJson);
             
@@ -288,19 +237,16 @@
             });
         })
         .catch(error => {
-            console.error('❌ Error loading China map from source', sourceIndex, ':', error);
-            // Try next source
-            loadMapFromSource(sourceIndex + 1);
+            console.error('❌ Error loading map:', error);
+            document.getElementById('china-map').innerHTML = 
+                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
+                '⚠️ Map data failed to load.' +
+                '</div>';
         });
         }
         
-        // Start loading from first source
-        console.log('🔄 Starting to load map...');
-        loadMapFromSource(0);
-        }
-        
-        // Start loading ECharts
-        loadECharts();
+        // Start initializing map
+        initializeMap();
     });
 </script>
 {% endif %}

@@ -140,47 +140,16 @@
 </div>
 
 {% if location_data and location_data.has_location %}
+<script src="{{ url_for('static', filename='lib/echarts.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Load ECharts with multiple fallback CDNs (optimized for Asia-Pacific)
-    const echartsUrls = [
-        'https://unpkg.com/echarts@5.4.3/dist/echarts.min.js',
-        'https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js',
-        'https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
-        'https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js',
-        'https://lib.baomitu.com/echarts/5.4.3/echarts.min.js'
-    ];
-    
-    let echartsLoaded = false;
-    let currentUrlIndex = 0;
-    
-    function loadECharts() {
-        if (currentUrlIndex >= echartsUrls.length) {
-            console.error('Failed to load ECharts from all CDN sources');
-            document.getElementById('entityMap').innerHTML = 
-                '<div style="text-align:center;padding:50px;color:#e74c3c;"><strong>⚠️ Unable to load map data from all sources.</strong><br>Please check your internet connection and refresh the page.</div>';
-            return;
-        }
-        
-        const script = document.createElement('script');
-        script.src = echartsUrls[currentUrlIndex];
-        script.onload = function() {
-            console.log('✅ ECharts loaded from:', echartsUrls[currentUrlIndex]);
-            echartsLoaded = true;
-            initMap();
-        };
-        script.onerror = function() {
-            console.warn('❌ Failed to load from:', echartsUrls[currentUrlIndex]);
-            currentUrlIndex++;
-            loadECharts();
-        };
-        document.head.appendChild(script);
-    }
+    console.log('✅ ECharts loaded from local file');
     
     function initMap() {
         if (!window.echarts) {
             console.error('ECharts is not available');
+            document.getElementById('entityMap').innerHTML = 
+                '<div style="text-align:center;padding:50px;color:#e74c3c;">⚠️ ECharts library failed to load.</div>';
             return;
         }
         
@@ -215,40 +184,18 @@ document.addEventListener('DOMContentLoaded', function() {
         '黑龙江': '黑龙江省'
     };
 
-    // Fetch China map data and render - try multiple sources
-    const mapSources = [
-        'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
-        'https://unpkg.com/echarts@5.4.3/map/json/china.json',
-        'https://cdn.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json',
-        'https://fastly.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json'
-    ];
+    // Fetch China map data from local file
+    console.log('🔄 Loading map from local file...');
     
-    let mapSourceIndex = 0;
-    
-    function loadMapData() {
-        if (mapSourceIndex >= mapSources.length) {
-            console.error('Failed to load map from all sources');
-            document.getElementById('entityMap').innerHTML = 
-                '<div style="text-align:center;padding:50px;color:#e74c3c;">⚠️ 地图数据加载失败,请检查网络连接</div>';
-            return;
-        }
-        
-        console.log('🔄 Trying to load map from:', mapSources[mapSourceIndex]);
-        
-        // Add timeout to prevent hanging
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        
-        fetch(mapSources[mapSourceIndex], { signal: controller.signal })
+    fetch("{{ url_for('static', filename='lib/china.json') }}")
         .then(response => {
-            clearTimeout(timeoutId);
             if (!response.ok) {
-                throw new Error('HTTP error ' + response.status);
+                throw new Error('Failed to load local map file');
             }
             return response.json();
         })
         .then(geoJson => {
-            console.log('✅ Map data loaded from:', mapSources[mapSourceIndex]);
+            console.log('✅ Map data loaded from local file');
             const chart = echarts.init(document.getElementById('entityMap'));
             
             // Register map
@@ -320,18 +267,14 @@ document.addEventListener('DOMContentLoaded', function() {
             window.addEventListener('resize', () => chart.resize());
         })
         .catch(error => {
-            console.error('❌ Error loading map from:', mapSources[mapSourceIndex], error);
-            mapSourceIndex++;
-            loadMapData();
+            console.error('❌ Error loading map:', error);
+            document.getElementById('entityMap').innerHTML = 
+                '<div style="text-align:center;padding:50px;color:#e74c3c;">⚠️ 地图数据加载失败</div>';
         });
     }
     
-    // Start loading map data
-    loadMapData();
-    }
-    
-    // Start loading ECharts
-    loadECharts();
+    // Start initializing map
+    initMap();
 });
 </script>
 {% endif %}
