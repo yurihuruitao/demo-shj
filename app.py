@@ -108,10 +108,231 @@ def find_entity_csv_path(entity_name, csv_base_dir):
     return None
 
 
+def get_entity_category(entity_name, csv_base_dir):
+    """
+    Get the primary category (一级类目) for an entity
+    
+    Args:
+        entity_name: Name of the entity
+        csv_base_dir: Base directory containing CSV files
+        
+    Returns:
+        Category name or None if not found
+    """
+    import pandas as pd
+    
+    # Search through all CSV files
+    for csv_file in csv_base_dir.rglob('*.csv'):
+        try:
+            df = pd.read_csv(csv_file, encoding='utf-8')
+            # Check if entity exists in '名字' column
+            if '名字' in df.columns and entity_name in df['名字'].values:
+                # Try to get category from '一级类目' column
+                if '一级类目' in df.columns:
+                    row = df[df['名字'] == entity_name].iloc[0]
+                    return row['一级类目']
+                # Otherwise extract from directory name
+                category = csv_file.parent.name.split('（')[-1].replace('）', '')
+                return category
+        except Exception:
+            continue
+    
+    return None
+
+
+def get_available_categories():
+    """
+    Get list of available primary categories from CSV files
+    
+    Returns:
+        List of category names
+    """
+    import pandas as pd
+    
+    categories = set()
+    csv_base_dir = Path(__file__).parent / 'csv_by_category_English'
+    
+    # Scan all CSV files
+    for csv_file in csv_base_dir.rglob('*.csv'):
+        try:
+            df = pd.read_csv(csv_file, encoding='utf-8', nrows=1)
+            if '一级类目' in df.columns:
+                category = df.iloc[0]['一级类目']
+                if pd.notna(category):
+                    categories.add(category)
+        except Exception:
+            continue
+    
+    # Sort categories
+    return sorted(list(categories))
+
+
+def get_map_data():
+    """
+    Get map data combining chapter locations and entity counts
+    
+    Returns:
+        Dictionary with chapter-province mapping and entity statistics
+    """
+    import pandas as pd
+    
+    # Load map table
+    map_file = Path(__file__).parent / '地圖表.csv'
+    if not map_file.exists():
+        return None
+    
+    try:
+        map_df = pd.read_csv(map_file, encoding='utf-8')
+        
+        # Process map data
+        map_data = {
+            'chapters': [],
+            'provinces': {},
+            'entity_stats': {}
+        }
+        
+        # Get entity counts by chapter from cooccurrence data
+        if COOCCURRENCE_DF is not None and '章节' in COOCCURRENCE_DF.columns:
+            chapter_counts = COOCCURRENCE_DF.groupby('章节')['名字'].nunique().to_dict()
+        else:
+            chapter_counts = {}
+        
+        for _, row in map_df.iterrows():
+            chapter = row['《山海经》篇目'].strip('《》')
+            provinces_str = row['省份']
+            
+            # Parse provinces - handle both 、 and ， as delimiters
+            provinces_str = provinces_str.replace('（', '(').replace('）', ')')
+            provinces_str = provinces_str.replace('，', '、')  # Normalize to 、
+            provinces = [p.strip() for p in provinces_str.split('、')]
+            
+            chapter_info = {
+                'name': chapter,
+                'full_name': f'《{chapter}》',
+                'provinces': provinces,
+                'entity_count': chapter_counts.get(chapter, 0)
+            }
+            map_data['chapters'].append(chapter_info)
+            
+            # Store province to chapter mapping
+            for province in provinces:
+                # Clean province name (remove parentheses content)
+                clean_province = province.split('(')[0].split('（')[0].strip()
+                if clean_province not in map_data['provinces']:
+                    map_data['provinces'][clean_province] = []
+                map_data['provinces'][clean_province].append({
+                    'chapter': chapter,
+                    'entity_count': chapter_counts.get(chapter, 0)
+                })
+        
+        return map_data
+        
+    except Exception as e:
+        print(f"Error loading map data: {e}")
+        return None
+
+
+def get_entity_location_data(entity_name):
+    """Get location data for a specific entity"""
+    import pandas as pd
+    from pathlib import Path
+    
+    try:
+        # Load map data
+        base_dir = Path(__file__).parent
+        map_csv_path = base_dir / '地圖表.csv'
+        if not map_csv_path.exists():
+            return None
+        
+        df_map = pd.read_csv(map_csv_path)
+        
+        # Find chapters containing this entity
+        entity_chapters = []
+        if COOCCURRENCE_DF is not None:
+            # Get all rows where this entity appears
+            entity_rows = COOCCURRENCE_DF[
+                (COOCCURRENCE_DF['名字'] == entity_name) | 
+                (COOCCURRENCE_DF['相关人物'] == entity_name)
+            ]
+            
+            if not entity_rows.empty:
+                # Extract unique chapters
+                all_chapters = set()
+                for chapters_str in entity_rows['章节'].dropna():
+                    chapters = [c.strip() for c in str(chapters_str).split(';')]
+                    all_chapters.update(chapters)
+                entity_chapters = list(all_chapters)
+        
+        # If no chapters found, return mythology indicator
+        if not entity_chapters:
+            return {
+                'has_location': False,
+                'message': '可能来源于神话章节',
+                'chapters': [],
+                'provinces': {}
+            }
+        
+        # Map chapters to provinces
+        location_data = {
+            'has_location': True,
+            'chapters': [],
+            'provinces': {}
+        }
+        
+        for chapter in entity_chapters:
+            # Find this chapter in map data - try both with and without 《》
+            chapter_variants = [chapter, f'《{chapter}》']
+            chapter_row = None
+            
+            for variant in chapter_variants:
+                chapter_row = df_map[df_map['《山海经》篇目'] == variant]
+                if not chapter_row.empty:
+                    break
+            
+            if chapter_row is not None and not chapter_row.empty:
+                provinces_str = chapter_row.iloc[0]['省份']
+                if pd.notna(provinces_str):
+                    # Split by both Chinese and English comma
+                    provinces = [p.strip() for p in str(provinces_str).replace('、', '，').split('，')]
+                    
+                    location_data['chapters'].append({
+                        'name': chapter,
+                        'provinces': provinces
+                    })
+                    
+                    # Add to provinces dict
+                    for province in provinces:
+                        clean_province = province.split('(')[0].split('（')[0].strip()
+                        if clean_province not in location_data['provinces']:
+                            location_data['provinces'][clean_province] = []
+                        location_data['provinces'][clean_province].append(chapter)
+        
+        # If no provinces found despite having chapters
+        if not location_data['chapters']:
+            return {
+                'has_location': False,
+                'message': '可能来源于神话章节',
+                'chapters': entity_chapters,
+                'provinces': {}
+            }
+        
+        return location_data
+        
+    except Exception as e:
+        print(f"Error loading entity location data: {e}")
+        return None
+
+
 @app.route('/images/<path:filename>')
 def serve_image(filename):
     """Serve images from the images directory"""
     return send_from_directory(IMAGES_DIR, filename)
+
+
+@app.route('/test_map')
+def test_map():
+    """Test page for map rendering"""
+    return send_from_directory('.', 'test_map.html')
 
 
 @app.route('/')
@@ -122,6 +343,9 @@ def index():
     # Get max_nodes from query parameter, default to 100
     max_nodes = request.args.get('max_nodes', 100, type=int)
     
+    # Get category filter from query parameter
+    category_filter = request.args.get('category', 'all', type=str)
+    
     # Limit to reasonable range (10 to 5000)
     max_nodes = max(10, min(max_nodes, 5000))
     
@@ -130,21 +354,31 @@ def index():
     if COOCCURRENCE_DF is not None:
         top_nodes = calculate_top_connected_nodes(COOCCURRENCE_DF, top_n=10)
     
-    # Generate global network graph
+    # Get available categories for filtering
+    available_categories = get_available_categories()
+    
+    # Get map data
+    map_data = get_map_data()
+    
+    # Generate global network graph with category filter
     global_network_html = None
     if COOCCURRENCE_DF is not None:
         global_network_html = create_global_network_graph(
             COOCCURRENCE_DF, 
             width="100%", 
             height="800px",
-            max_nodes=max_nodes
+            max_nodes=max_nodes,
+            category_filter=category_filter if category_filter != 'all' else None
         )
     
     return render_template('index.html', 
                          categories=categories,
                          global_network_html=global_network_html,
                          current_max_nodes=max_nodes,
-                         top_nodes=top_nodes)
+                         top_nodes=top_nodes,
+                         available_categories=available_categories,
+                         current_category=category_filter,
+                         map_data=map_data)
 
 
 @app.route('/category/<path:csv_path>')
@@ -228,6 +462,9 @@ def item_detail(csv_path, item_name):
         # Get all occurrences across chapters
         all_occurrences = get_all_occurrences(item_name, COOCCURRENCE_DF)
     
+    # Get location data for this entity
+    location_data = get_entity_location_data(item_name)
+    
     return render_template('detail.html',
                          categories=categories,
                          category=category,
@@ -238,7 +475,8 @@ def item_detail(csv_path, item_name):
                          network_html=network_html,
                          original_text=original_text,
                          chapter=chapter,
-                         all_occurrences=all_occurrences)
+                         all_occurrences=all_occurrences,
+                         location_data=location_data)
 
 
 @app.template_filter('get_display_name')

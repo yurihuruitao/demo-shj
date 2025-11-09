@@ -660,6 +660,113 @@ body {
     }
 }
 
+/* Map Section */
+.map-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 3rem;
+}
+
+.map-section h2 {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.map-intro {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.8;
+    text-align: center;
+    margin-bottom: 2rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.map-legend-container {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.legend-chapter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.legend-chapter-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.chapter-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 2px solid rgba(0,0,0,0.1);
+}
+
+.chapter-color[data-chapter="南山經"] {
+    background: #e74c3c;
+}
+
+.chapter-color[data-chapter="西山經"] {
+    background: #f39c12;
+}
+
+.chapter-color[data-chapter="北山經"] {
+    background: #3498db;
+}
+
+.chapter-color[data-chapter="東山經"] {
+    background: #2ecc71;
+}
+
+.chapter-color[data-chapter="中山經"] {
+    background: #9b59b6;
+}
+
+.chapter-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.chapter-count {
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+#china-map {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+}
+
 /* Global Network Section */
 .global-network-section {
     margin-top: 3rem;
@@ -862,24 +969,57 @@ a.top-node-card:hover .connection-count {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.5rem;
     flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 .node-control-form label {
     color: white;
     font-weight: 600;
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.category-select {
+    width: 200px;
+    padding: 0.6rem 1rem;
+    border: 2px solid white;
+    border-radius: 8px;
     font-size: 1rem;
+    background: white;
+    color: #2c3e50;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.category-select:hover {
+    border-color: #ffd700;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.category-select:focus {
+    outline: none;
+    border-color: #ffd700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.3);
 }
 
 .node-control-form input[type="number"] {
-    width: 150px;
+    width: 120px;
     padding: 0.6rem 1rem;
     border: 2px solid white;
     border-radius: 8px;
     font-size: 1rem;
     text-align: center;
     transition: all 0.3s ease;
+    font-weight: 600;
 }
 
 .node-control-form input[type="number"]:focus {
@@ -892,38 +1032,45 @@ a.top-node-card:hover .connection-count {
     background: white;
     color: #667eea;
     border: none;
-    padding: 0.6rem 1.5rem;
+    padding: 0.7rem 2rem;
     border-radius: 8px;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    align-self: flex-end;
+    margin-bottom: 0.3rem;
 }
 
 .btn-update:hover {
     background: #ffd700;
     color: #2c3e50;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
 }
 
 .btn-update:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
 .current-info {
     color: white;
-    font-size: 0.95rem;
-    padding: 0.5rem 1rem;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
     backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    align-self: flex-end;
+    margin-bottom: 0.3rem;
+    text-align: center;
 }
 
 .current-info strong {
     color: #ffd700;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .network-intro strong {
@@ -936,6 +1083,37 @@ a.top-node-card:hover .connection-count {
     min-height: 800px;
     border-radius: 12px;
     overflow: hidden;
+}
+
+/* Responsive adjustments for map */
+@media (max-width: 768px) {
+    .map-section {
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .map-section h2 {
+        font-size: 1.5rem;
+    }
+    
+    .map-intro {
+        font-size: 0.9rem;
+    }
+    
+    .map-legend {
+        flex-direction: column;
+        gap: 0.8rem;
+        padding: 1rem;
+    }
+    
+    .legend-chapter-item {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    #china-map {
+        height: 400px !important;
+    }
 }
 
 /* Responsive adjustments for global network */
@@ -963,28 +1141,39 @@ a.top-node-card:hover .connection-count {
     
     .node-control-form {
         flex-direction: column;
-        gap: 0.8rem;
+        gap: 1rem;
+    }
+    
+    .control-group {
+        width: 100%;
+        max-width: 300px;
     }
     
     .node-control-form label {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         text-align: center;
+    }
+    
+    .category-select {
+        width: 100%;
     }
     
     .node-control-form input[type="number"] {
         width: 100%;
-        max-width: 200px;
     }
     
     .btn-update {
         width: 100%;
-        max-width: 200px;
+        max-width: 300px;
+        align-self: center;
     }
     
     .current-info {
         width: 100%;
+        max-width: 300px;
         text-align: center;
         font-size: 0.85rem;
+        align-self: center;
     }
     
     .top-nodes-section {
@@ -1024,4 +1213,75 @@ a.top-node-card:hover .connection-count {
     .top-nodes-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+}
+
+/* Detail Page Location Map Styles */
+.location-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #3498db;
+}
+
+.location-info h3 {
+    color: #2c3e50;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.chapter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.chapter-list li {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #3498db;
+    transition: all 0.3s ease;
+}
+
+.chapter-list li:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+}
+
+.chapter-list strong {
+    color: #2c3e50;
+    font-size: 1.05rem;
+}
+
+.province-list {
+    color: #555;
+    font-size: 0.95rem;
+    margin-left: 0.5rem;
+}
+
+.no-location {
+    text-align: center;
+    padding: 2rem;
+    color: #95a5a6;
+    font-size: 1.1rem;
+    font-style: italic;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #ddd;
+}
+
+.map-description {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+#entityMap {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
 }

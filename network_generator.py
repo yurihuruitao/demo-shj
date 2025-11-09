@@ -422,7 +422,33 @@ def create_interactive_network_graph(item_name: str, relationships_data: Dict, w
     return custom_html
 
 
-def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: str = "800px", max_nodes: int = 500) -> str:
+def get_entities_by_category(category: str, csv_base_dir) -> set:
+    """
+    Get all entity names belonging to a specific category
+    
+    Args:
+        category: Primary category name (一级类目)
+        csv_base_dir: Base directory containing CSV files
+        
+    Returns:
+        Set of entity names in the category
+    """
+    entities = set()
+    
+    for csv_file in csv_base_dir.rglob('*.csv'):
+        try:
+            df = pd.read_csv(csv_file, encoding='utf-8')
+            if '一级类目' in df.columns and '名字' in df.columns:
+                # Get entities matching the category
+                category_entities = df[df['一级类目'] == category]['名字'].values
+                entities.update(category_entities)
+        except Exception:
+            continue
+    
+    return entities
+
+
+def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: str = "800px", max_nodes: int = 500, category_filter: str = None) -> str:
     """
     Create a global network graph showing all entities and their relationships
     
@@ -431,12 +457,22 @@ def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: s
         width: Width of the network graph
         height: Height of the network graph
         max_nodes: Maximum number of nodes to display (to prevent performance issues)
+        category_filter: Filter by primary category (一级类目), None for all
     
     Returns:
         HTML string for embedding
     """
     if df is None or df.empty:
         return "<div class='no-network'>No data available for global network</div>"
+    
+    # Filter by category if specified
+    if category_filter:
+        from pathlib import Path
+        csv_base_dir = Path(__file__).parent / 'csv_by_category_English'
+        filtered_entities = get_entities_by_category(category_filter, csv_base_dir)
+        if filtered_entities:
+            # Only keep rows where '名字' is in filtered_entities
+            df = df[df['名字'].isin(filtered_entities)].copy()
     
     # Create pyvis network with optimized settings for large graphs
     net = Network(

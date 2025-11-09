@@ -38,6 +38,223 @@
     </div>
 </div>
 
+<!-- Interactive China Map -->
+{% if map_data %}
+<div class="map-section">
+    <h2>🗺️ Geographic Distribution of Shan Hai Jing</h2>
+    <p class="map-intro">
+        Interactive map showing the geographical distribution of chapters in the Classic of Mountains and Seas. 
+        Click on provinces to see which chapters cover those regions.
+    </p>
+    
+    <div class="map-legend-container">
+        <div class="map-legend">
+            {% for chapter in map_data.chapters %}
+            <div class="legend-chapter-item">
+                <span class="chapter-color" data-chapter="{{ chapter.name }}"></span>
+                <span class="chapter-name">{{ chapter.full_name }}</span>
+                <span class="chapter-count">({{ chapter.entity_count }} entities)</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div id="china-map" style="width: 100%; height: 600px; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+        <div style="text-align: center; color: #999;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🗺️</div>
+            <div>Loading map data...</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if ECharts is loaded
+        if (typeof echarts === 'undefined') {
+            console.error('ECharts library not loaded!');
+            document.getElementById('china-map').innerHTML = 
+                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c;">' +
+                '⚠️ ECharts library failed to load. Please refresh the page.' +
+                '</div>';
+            return;
+        }
+        
+        console.log('✅ ECharts loaded, version:', echarts.version);
+        
+        // Map data
+        var mapData = {{ map_data|tojson|safe }};
+        console.log('✅ Map data loaded:', mapData);
+        
+        // Load China map JSON data - try multiple sources
+        var mapSources = [
+            'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json',
+            'https://fastly.jsdelivr.net/npm/echarts@5.4.3/map/json/china.json'
+        ];
+        
+        function loadMapFromSource(sourceIndex) {
+        if (sourceIndex >= mapSources.length) {
+            document.getElementById('china-map').innerHTML = 
+                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #e74c3c; font-size: 1.1rem; text-align: center; padding: 2rem;">' +
+                '⚠️ Unable to load map data from all sources.<br/>Please check your internet connection and refresh the page.' +
+                '</div>';
+            return;
+        }
+        
+        console.log('Trying to load map from:', mapSources[sourceIndex]);
+        
+        fetch(mapSources[sourceIndex])
+        .then(response => response.json())
+        .then(chinaJson => {
+            // Register map
+            echarts.registerMap('china', chinaJson);
+            
+            // Initialize map
+            var mapChart = echarts.init(document.getElementById('china-map'));
+            
+            // Chapter colors
+            var chapterColors = {
+                '南山經': '#e74c3c',
+                '西山經': '#f39c12',
+                '北山經': '#3498db',
+                '東山經': '#2ecc71',
+                '中山經': '#9b59b6'
+            };
+            
+            // Province name mapping - add "省" suffix for most provinces
+            var provinceNameMap = {
+                '内蒙古': '内蒙古自治区',
+                '广西': '广西壮族自治区',
+                '宁夏': '宁夏回族自治区',
+                '青海': '青海省',
+                '甘肃': '甘肃省',
+                '陕西': '陕西省',
+                '山西': '山西省',
+                '河北': '河北省',
+                '河南': '河南省',
+                '山东': '山东省',
+                '江苏': '江苏省',
+                '安徽': '安徽省',
+                '浙江': '浙江省',
+                '江西': '江西省',
+                '湖北': '湖北省',
+                '湖南': '湖南省',
+                '四川': '四川省',
+                '广东': '广东省'
+            };
+            
+            // Prepare data for map
+            var provinceData = [];
+            for (var province in mapData.provinces) {
+                var chapters = mapData.provinces[province];
+                var totalEntities = chapters.reduce((sum, ch) => sum + ch.entity_count, 0);
+                var chapterNames = chapters.map(ch => ch.chapter).join('、');
+                
+                // Get full province name for ECharts
+                var fullProvinceName = provinceNameMap[province] || province;
+                
+                provinceData.push({
+                    name: fullProvinceName,
+                    value: totalEntities,
+                    chapters: chapters,
+                    chapterNames: chapterNames
+                });
+            }
+            
+            console.log('✅ Province data prepared:', provinceData.length, 'provinces');
+            console.log('Sample province data:', provinceData.slice(0, 3));
+            
+            // Map options
+            var option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        if (params.data) {
+                            var html = '<b>' + params.data.name + '</b><br/>';
+                            html += '涵盖章节: ' + params.data.chapterNames + '<br/>';
+                            html += '实体总数: ' + params.data.value;
+                            return html;
+                        }
+                        return params.name;
+                    },
+                    backgroundColor: 'rgba(50, 50, 50, 0.95)',
+                    borderColor: '#777',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#fff',
+                        fontSize: 14
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: Math.max(...provinceData.map(d => d.value)),
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['多', '少'],
+                    inRange: {
+                        color: ['#e0f3f8', '#abd9e9', '#74add1', '#4575b4', '#313695']
+                    },
+                    calculable: true,
+                    textStyle: {
+                        color: '#333'
+                    },
+                    itemWidth: 20,
+                    itemHeight: 140,
+                    show: true
+                },
+                series: [{
+                    name: 'Shan Hai Jing',
+                    type: 'map',
+                    map: 'china',
+                    roam: true,
+                    emphasis: {
+                        label: {
+                            show: true,
+                            color: '#000'
+                        },
+                        itemStyle: {
+                            areaColor: '#ffd700',
+                            borderColor: '#ff6b6b',
+                            borderWidth: 2
+                        }
+                    },
+                    label: {
+                        show: true,
+                        fontSize: 10,
+                        color: '#333'
+                    },
+                    itemStyle: {
+                        borderColor: '#fff',
+                        borderWidth: 1,
+                        areaColor: '#f0f0f0'
+                    },
+                    data: provinceData
+                }]
+            };
+            
+            mapChart.setOption(option);
+            console.log('✅ Map rendered successfully!');
+            
+            // Responsive resize
+            window.addEventListener('resize', function() {
+                mapChart.resize();
+            });
+        })
+        .catch(error => {
+            console.error('❌ Error loading China map from source', sourceIndex, ':', error);
+            // Try next source
+            loadMapFromSource(sourceIndex + 1);
+        });
+    }
+    
+        // Start loading from first source
+        console.log('🔄 Starting to load map...');
+        loadMapFromSource(0);
+    });
+</script>
+{% endif %}
+
 <!-- Global Knowledge Network -->
 {% if global_network_html %}
 <div class="global-network-section">
@@ -85,20 +302,39 @@
     </div>
     {% endif %}
     
-    <!-- Node Count Control -->
+    <!-- Network Controls -->
     <div class="network-controls">
         <form method="get" action="/" class="node-control-form">
-            <label for="max_nodes">Number of nodes to display:</label>
-            <input type="number" 
-                   id="max_nodes" 
-                   name="max_nodes" 
-                   value="{{ current_max_nodes }}" 
-                   min="10" 
-                   max="5000" 
-                   step="10"
-                   placeholder="100">
-            <button type="submit" class="btn-update">Update Network</button>
-            <span class="current-info">Currently showing: <strong>{{ current_max_nodes }}</strong> nodes</span>
+            <div class="control-group">
+                <label for="category">Category Filter:</label>
+                <select id="category" name="category" class="category-select">
+                    <option value="all" {% if current_category == 'all' %}selected{% endif %}>All Categories</option>
+                    {% for cat in available_categories %}
+                    <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="max_nodes">Number of nodes:</label>
+                <input type="number" 
+                       id="max_nodes" 
+                       name="max_nodes" 
+                       value="{{ current_max_nodes }}" 
+                       min="10" 
+                       max="5000" 
+                       step="10"
+                       placeholder="100">
+            </div>
+            
+            <button type="submit" class="btn-update">🔄 Update Network</button>
+            
+            <span class="current-info">
+                {% if current_category != 'all' %}
+                Showing: <strong>{{ current_category }}</strong> |
+                {% endif %}
+                <strong>{{ current_max_nodes }}</strong> nodes
+            </span>
         </form>
     </div>
     
