@@ -53,11 +53,12 @@ def calculate_top_connected_nodes(df, top_n=10):
         # Parse related entities
         related_entities = str(row['相关人物']).split(',') if pd.notna(row['相关人物']) else []
         related_pinyin = str(row['相关人物（拼音）']).split(',') if pd.notna(row['相关人物（拼音）']) else []
-        relationships = str(row['关系']).split(',') if pd.notna(row['关系']) else []
+        # Use 'relation' column (English) instead of '关系' (Chinese)
+        relationships = str(row['relation']).split(',') if pd.notna(row.get('relation')) else []
         
         for entity, entity_pinyin, relation in zip(related_entities, related_pinyin, relationships):
             entity = entity.strip()
-            if entity and relation.strip() != '无关':
+            if entity and relation.strip() != 'Independent':
                 if entity not in node_connections:
                     node_connections[entity] = {
                         'name': entity,

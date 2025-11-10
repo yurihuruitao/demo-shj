@@ -38,15 +38,16 @@ def get_item_relationships(item_name: str, df: pd.DataFrame) -> Dict:
     # Parse related entities and relationships
     related_entities = str(item_row['相关人物']).split(',') if pd.notna(item_row['相关人物']) else []
     related_entities_pinyin = str(item_row['相关人物（拼音）']).split(',') if pd.notna(item_row['相关人物（拼音）']) else []
-    relationships = str(item_row['关系']).split(',') if pd.notna(item_row['关系']) else []
+    # Use 'relation' column (English) instead of '关系' (Chinese)
+    relationships = str(item_row['relation']).split(',') if pd.notna(item_row.get('relation')) else []
     
     # Get main item pinyin name
     main_item_pinyin = item_row['名字（拼音）'] if pd.notna(item_row['名字（拼音）']) else item_name
     
-    # Filter out "无关" (irrelevant) relationships
+    # Filter out "Independent" (irrelevant) relationships
     valid_relationships = []
     for entity, entity_pinyin, relation in zip(related_entities, related_entities_pinyin, relationships):
-        if relation.strip() != '无关' and relation.strip() != '':
+        if relation.strip() != 'Independent' and relation.strip() != '':
             valid_relationships.append({
                 'target': entity.strip(),
                 'target_pinyin': entity_pinyin.strip(),
@@ -351,7 +352,7 @@ def create_interactive_network_graph(item_name: str, relationships_data: Dict, w
     net.add_node(
         center_name_pinyin,
         label=center_name_pinyin,
-        title=f"<b>主实体</b><br>{center_name_pinyin}<br>原名: {item_name}",
+        title=f"<b>Main Entity</b><br>{center_name_pinyin}<br>Original: {item_name}",
         color='#e74c3c',
         size=30,
         font={'size': 16, 'color': '#ffffff', 'face': 'Arial Black'}
@@ -367,7 +368,7 @@ def create_interactive_network_graph(item_name: str, relationships_data: Dict, w
         net.add_node(
             target_pinyin,
             label=target_pinyin,
-            title=f"<b>相关实体</b><br>{target_pinyin}<br>原名: {original_target}",
+            title=f"<b>Related Entity</b><br>{target_pinyin}<br>Original: {original_target}",
             color='#3498db',
             size=20,
             font={'size': 12, 'color': '#333333'}
@@ -389,7 +390,7 @@ def create_interactive_network_graph(item_name: str, relationships_data: Dict, w
     custom_html = f"""
     <div class="pyvis-network-container">
         <div class="network-instructions">
-            <p><strong>💡 交互提示:</strong> 拖动节点调整位置 | 滚轮缩放 | 拖动背景平移视图 | 悬停查看详情</p>
+            <p><strong>💡 Interactive Tips:</strong> Drag nodes to reposition | Scroll to zoom | Drag background to pan | Hover for details</p>
         </div>
         {html}
     </div>
@@ -578,11 +579,12 @@ def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: s
         # Parse related entities
         related_entities = str(row['相关人物']).split(',') if pd.notna(row['相关人物']) else []
         related_pinyin = str(row['相关人物（拼音）']).split(',') if pd.notna(row['相关人物（拼音）']) else []
-        relationships = str(row['关系']).split(',') if pd.notna(row['关系']) else []
+        # Use 'relation' column (English) instead of '关系' (Chinese)
+        relationships = str(row['relation']).split(',') if pd.notna(row.get('relation')) else []
         
         for entity, entity_pinyin, relation in zip(related_entities, related_pinyin, relationships):
             entity = entity.strip()
-            if entity and relation.strip() != '无关':
+            if entity and relation.strip() != 'Independent':
                 if entity not in node_connections:
                     node_connections[entity] = {
                         'pinyin': entity_pinyin.strip(),
@@ -635,13 +637,14 @@ def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: s
             continue
         
         related_entities = str(row['相关人物']).split(',') if pd.notna(row['相关人物']) else []
-        relationships = str(row['关系']).split(',') if pd.notna(row['关系']) else []
+        # Use 'relation' column (English) instead of '关系' (Chinese)
+        relationships = str(row['relation']).split(',') if pd.notna(row.get('relation')) else []
         
         for entity, relation in zip(related_entities, relationships):
             entity = entity.strip()
             relation = relation.strip()
             
-            if entity in limited_nodes and relation != '无关':
+            if entity in limited_nodes and relation != 'Independent':
                 # Avoid duplicate edges
                 edge_key = tuple(sorted([main_entity, entity]))
                 if edge_key not in added_edges:
@@ -923,7 +926,7 @@ def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: s
                 </div>
                 <div class="stat-item">
                     <div class="stat-number">{len(added_edges)}</div>
-                    <div class="stat-label">Connections</div>
+                    <div class="stat-label">Relationships</div>
                 </div>
             </div>
         </div>
@@ -932,24 +935,24 @@ def create_global_network_graph(df: pd.DataFrame, width: str = "100%", height: s
             <div class="legend-items">
                 <div class="legend-item">
                     <div class="legend-color" style="background: #e74c3c;"></div>
-                    <span class="legend-label">Highly Connected (20+ connections)</span>
+                    <span class="legend-label">Highly Connected (20+ relationships)</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #f39c12;"></div>
-                    <span class="legend-label">Well Connected (10-20 connections)</span>
+                    <span class="legend-label">Well Connected (10-20 relationships)</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #3498db;"></div>
-                    <span class="legend-label">Connected (5-10 connections)</span>
+                    <span class="legend-label">Connected (5-10 relationships)</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #95a5a6;"></div>
-                    <span class="legend-label">Less Connected (< 5 connections)</span>
+                    <span class="legend-label">Less Connected (< 5 relationships)</span>
                 </div>
             </div>
         </div>
         <div class="global-network-instructions">
-            <p>🔍 Interactive Global Knowledge Network | 💡 Click a node to highlight its connections | Drag nodes to reposition | Scroll to zoom | Click empty space to reset | Use navigation buttons for control</p>
+            <p>🔍 Interactive Global Knowledge Network | 💡 Click a node to highlight relationships | Drag nodes to reposition | Scroll to zoom | Click empty space to reset | Use navigation buttons for control</p>
         </div>
         {network_div}
     </div>
