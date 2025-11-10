@@ -268,7 +268,7 @@ def get_entity_location_data(entity_name):
         if not entity_chapters:
             return {
                 'has_location': False,
-                'message': '可能来源于神话章节',
+                'message': 'May Come from Mythology Chapters',
                 'chapters': [],
                 'provinces': {}
             }
@@ -312,7 +312,7 @@ def get_entity_location_data(entity_name):
         if not location_data['chapters']:
             return {
                 'has_location': False,
-                'message': '可能来源于神话章节',
+                'message': 'May Come from Mythology Chapters',
                 'chapters': entity_chapters,
                 'provinces': {}
             }
